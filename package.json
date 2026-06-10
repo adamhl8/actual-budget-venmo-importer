@@ -1,0 +1,47 @@
+{
+	"name": "actual-budget-venmo-importer",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "Import your Venmo transactions into Actual Budget",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/adamhl8/actual-budget-venmo-importer"
+	},
+	"homepage": "https://github.com/adamhl8/actual-budget-venmo-importer",
+	"bugs": {
+		"url": "https://github.com/adamhl8/actual-budget-venmo-importer/issues"
+	},
+	"author": {
+		"email": "adamhl@pm.me",
+		"name": "Adam Langbert",
+		"url": "https://github.com/adamhl8"
+	},
+	"license": "MIT",
+	"scripts": {
+		"auth": "tsx src/cli.ts auth",
+		"docker:push": "docker build --platform linux/amd64 . -t ghcr.io/adamhl8/actual-budget-venmo-importer && docker push ghcr.io/adamhl8/actual-budget-venmo-importer:latest",
+		"dry-run": "tsx src/cli.ts sync-once --dry-run",
+		"lint": "markdown-toc -i --bullets '-' --maxdepth 3 ./README.md && tsc --noEmit && biome check --write && adamhl8-knip",
+		"list-accounts": "tsx src/cli.ts list-accounts",
+		"prepare": "find .githooks -type f -exec ln -srf {} .git/hooks/ \\; || true",
+		"start": "tsx src/cli.ts start",
+		"sync-once": "tsx src/cli.ts sync-once"
+	},
+	"dependencies": {
+		"@actual-app/api": "^26.6.0",
+		"@inquirer/prompts": "^8.5.2",
+		"arktype": "^2.2.0",
+		"croner": "^10.0.1",
+		"ts-explicit-errors": "^4.1.1",
+		"tsx": "^4.22.4",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@adamhl8/configs": "^0.19.3",
+		"@biomejs/biome": "^2.4.16",
+		"@types/bun": "^1.3.14",
+		"knip": "^6.16.1",
+		"markdown-toc": "^1.2.0",
+		"typescript": "^6.0.3"
+	}
+}

@@ -1,0 +1,18 @@
+# Example compose file. Drop this next to your existing actualbudget service,
+# or use as a standalone stack.
+
+services:
+  # actualbudget:
+  #   ...the rest of your actualbudget service configuration
+
+  actual-budget-venmo-importer:
+    image: ghcr.io/adamhl/actual-budget-venmo-importer:latest
+    container_name: actual-budget-venmo-importer
+    restart: always
+    # Required so `docker compose run --rm actual-budget-venmo-importer auth` can prompt interactively.
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./data/:/data/
+      - ./actual-budget-venmo-importer-cache:/app/actual-cache
+    env_file: .env

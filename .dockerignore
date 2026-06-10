@@ -1,0 +1,12 @@
+node_modules
+.git
+.gitignore
+data
+actual-cache
+venmo-data
+actual-budget-venmo-importer-cache
+*.md
+.env
+.env.*
+Dockerfile
+docker-compose*.yml
