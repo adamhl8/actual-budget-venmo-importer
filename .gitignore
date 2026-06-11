@@ -3,7 +3,6 @@ data/
 actual-cache/
 venmo-data/
 actual-budget-venmo-importer-cache/
-bun.lock
 *.log
 .env
 .env.local

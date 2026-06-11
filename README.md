@@ -4,6 +4,9 @@ Pulls your Venmo transactions on a schedule and imports them into [Actual Budget
 
 TypeScript, run under Node 20 via [`tsx`](https://github.com/privatenumber/tsx). Uses an unofficial Venmo HTTP API (ported from [Integuru-AI/Venmo-Unofficial-API](https://github.com/Integuru-AI/Venmo-Unofficial-API)) and the official `@actual-app/api` package. Scheduling via [`croner`](https://github.com/Hexagon/croner).
 
+> [!IMPORTANT]
+> This image tracks the `nightly` release of `@actual-app/api`, so your Actual server should run the `actualbudget/actual-server` nightly image. Running it against a stable server can migrate your budget file forward and break older clients.
+
 ## Setup
 
 ### 1. Find your Actual Sync ID

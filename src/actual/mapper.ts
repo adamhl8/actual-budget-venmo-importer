@@ -4,12 +4,13 @@ import type { ActualTransaction } from "./client.ts";
 function signedAmountCents(story: VenmoStory, meId: string): number {
 	const payment = requirePayment(story);
 	const cents = Math.round(payment.amount * 100);
-	let outflow: boolean;
-	if (payment.actor.id === meId) outflow = true;
-	else if (payment.target.user.id === meId) outflow = false;
-	else
+	const iAmActor = payment.actor.id === meId;
+	if (!iAmActor && payment.target.user.id !== meId)
 		throw new Error(`Story ${story.id} involves neither party as me (${meId})`);
 
+	// The actor initiated the story, not necessarily sent the money: "pay" flows
+	// actor -> target, "charge" flows target -> actor.
+	let outflow = payment.action === "charge" ? !iAmActor : iAmActor;
 	if (story.type === "refund") outflow = !outflow;
 	return outflow ? -cents : cents;
 }

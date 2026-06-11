@@ -28,7 +28,7 @@
 		"sync-once": "tsx src/cli.ts sync-once"
 	},
 	"dependencies": {
-		"@actual-app/api": "^26.6.0",
+		"@actual-app/api": "nightly",
 		"@inquirer/prompts": "^8.5.2",
 		"arktype": "^2.2.0",
 		"croner": "^10.0.1",
