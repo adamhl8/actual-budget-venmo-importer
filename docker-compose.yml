@@ -6,7 +6,7 @@ services:
   #   ...the rest of your actualbudget service configuration
 
   actual-budget-venmo-importer:
-    image: ghcr.io/adamhl/actual-budget-venmo-importer:latest
+    image: ghcr.io/adamhl8/actual-budget-venmo-importer:latest
     container_name: actual-budget-venmo-importer
     restart: always
     # Required so `docker compose run --rm actual-budget-venmo-importer auth` can prompt interactively.

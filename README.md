@@ -2,7 +2,7 @@
 
 Pulls your Venmo transactions on a schedule and imports them into [Actual Budget](https://actualbudget.org/). Designed to run as a Docker container alongside `actualbudget/actual-server` in a Compose stack.
 
-TypeScript, run under Node 20 via [`tsx`](https://github.com/privatenumber/tsx). Uses an unofficial Venmo HTTP API (ported from [Integuru-AI/Venmo-Unofficial-API](https://github.com/Integuru-AI/Venmo-Unofficial-API)) and the official `@actual-app/api` package. Scheduling via [`croner`](https://github.com/Hexagon/croner).
+TypeScript, run directly under Node 24 (which strips types natively, so there's no build step). Tooling is [Bun](https://bun.com/) (install, lint, test, release). Uses an unofficial Venmo HTTP API (ported from [Integuru-AI/Venmo-Unofficial-API](https://github.com/Integuru-AI/Venmo-Unofficial-API)) and the official `@actual-app/api` package. Scheduling via [`croner`](https://github.com/Hexagon/croner).
 
 > [!IMPORTANT]
 > This image tracks the `nightly` release of `@actual-app/api`, so your Actual server should run the `actualbudget/actual-server` nightly image. Running it against a stable server can migrate your budget file forward and break older clients.
@@ -73,37 +73,38 @@ docker compose logs -f actual-budget-venmo-importer
 
 ## Commands
 
-| Command | What it does |
-|---|---|
-| `start` (default) | Long-running cron service. |
-| `auth` | Interactive Venmo bootstrap. |
-| `sync-once` | One-shot sync. Exit code 0 on success, 2 if token rejected. |
-| `sync-once --dry-run` | Fetch + map + print as a table; no writes. |
-| `list-accounts` | Print Actual accounts (id, name, status). |
+| Command               | What it does                                                                                                                    |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `start` (default)     | Long-running cron service.                                                                                                      |
+| `auth`                | Interactive Venmo bootstrap.                                                                                                    |
+| `sync-once`           | One-shot sync. Exit code 0 on success, 2 if token rejected.                                                                     |
+| `sync-once --dry-run` | Fetch + map + print as a table; no writes.                                                                                      |
+| `sync-once --force`   | Ignore the saved cursor and reimport the full `INITIAL_BACKFILL_DAYS` window. Actual's `imported_id` dedup absorbs the overlap. |
+| `list-accounts`       | Print Actual accounts (id, name, status).                                                                                       |
 
 Same image, different first argument. You can `docker exec` into a running container or use `docker compose run --rm` to spin up a one-off.
 
 ## Environment variables
 
-| Var | Required | Default | Notes |
-|---|---|---|---|
-| `ACTUAL_SERVER_URL` | yes | — | e.g. `http://actualbudget:5006` |
-| `ACTUAL_SERVER_PASSWORD` | yes | — | |
-| `ACTUAL_SYNC_ID` | yes | — | From Actual UI → Settings → Show advanced settings → Sync ID. |
-| `ACTUAL_VENMO_ACCOUNT_ID` | yes (for sync) | — | UUID from `list-accounts` output. |
-| `VENMO_DEVICE_ID` | no | (generated) | Pre-trusted device-id from a browser session — bypasses OAuth2 fingerprinting if first-time `auth` returns "OAuth2 Exception". |
-| `SYNC_CRON` | no | `0 4 * * *` | 5-field, UTC. |
-| `INITIAL_BACKFILL_DAYS` | no | `30` | First-run window only; ignored once state is established. |
-| `IMPORT_PENDING` | no | `true` | Set `false` to skip pending stories. |
-| `SYNC_ON_BOOT` | no | `false` | Run a sync immediately on `start`. |
-| `DATA_DIR` | no | `/data` | Holds `session.json` + `state.json`. |
-| `ACTUAL_CACHE_DIR` | no | `/app/actual-cache` | Actual SDK's local cache. |
-| `LOG_LEVEL` | no | `info` | `debug`/`info`/`warn`/`error`. |
-| `TZ` | no | `UTC` | Affects log timestamps; cron is always UTC. |
+| Var                       | Required       | Default             | Notes                                                                                                                          |
+| ------------------------- | -------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `ACTUAL_SERVER_URL`       | yes            | —                   | e.g. `http://actualbudget:5006`                                                                                                |
+| `ACTUAL_SERVER_PASSWORD`  | yes            | —                   |                                                                                                                                |
+| `ACTUAL_SYNC_ID`          | yes            | —                   | From Actual UI → Settings → Show advanced settings → Sync ID.                                                                  |
+| `ACTUAL_VENMO_ACCOUNT_ID` | yes (for sync) | —                   | UUID from `list-accounts` output.                                                                                              |
+| `VENMO_DEVICE_ID`         | no             | (generated)         | Pre-trusted device-id from a browser session — bypasses OAuth2 fingerprinting if first-time `auth` returns "OAuth2 Exception". |
+| `SYNC_CRON`               | no             | `0 4 * * *`         | 5-field, UTC.                                                                                                                  |
+| `INITIAL_BACKFILL_DAYS`   | no             | `30`                | First-run window only; ignored once state is established.                                                                      |
+| `IMPORT_PENDING`          | no             | `true`              | Set `false` to skip pending stories.                                                                                           |
+| `SYNC_ON_BOOT`            | no             | `false`             | Run a sync immediately on `start`.                                                                                             |
+| `DATA_DIR`                | no             | `/data`             | Holds `session.json` + `state.json`.                                                                                           |
+| `ACTUAL_CACHE_DIR`        | no             | `/app/actual-cache` | Actual SDK's local cache.                                                                                                      |
+| `LOG_LEVEL`               | no             | `info`              | `debug`/`info`/`warn`/`error`.                                                                                                 |
+| `TZ`                      | no             | `UTC`               | Affects log timestamps; cron is always UTC.                                                                                    |
 
 ## How it works
 
-1. `start` validates a session exists, registers a `Bun.cron` job, and waits.
+1. `start` validates a session exists, registers a `croner` job, and waits.
 2. On each tick: load session → fetch Venmo stories newest-first, paginating via `before_id`, stopping when we hit `lastSeenStoryId` (incremental) or `INITIAL_BACKFILL_DAYS` cutoff (first run).
 3. Map each story to an Actual transaction:
    - `imported_id` = Venmo `story.id` — Actual dedups via this field, so re-imports update in place.
@@ -120,7 +121,7 @@ Pending transactions are imported with `cleared: false`. On a later run they re-
 - **Cancelled pending transactions** linger in Actual as uncleared. Venmo doesn't return cancelled stories, so the service can't detect them.
 - **Dates are UTC.** A 9 PM PT payment shows under the next day's date in Actual. A `USER_TZ` env var is a likely future addition.
 - **Unofficial Venmo API.** The HTTP endpoints are reverse-engineered. Expect occasional breakage when Venmo changes things — the failure point is isolated to `src/venmo/`.
-- **Originally planned for Bun**, but `@actual-app/api`'s native `better-sqlite3` dependency doesn't load under Bun. Switched to `node:20-slim` + `tsx`. Bun is still fine for local typecheck (`bun run typecheck`) or `bun install` if preferred.
+- **The runtime is Node, not Bun.** `@actual-app/api` opens its budget database through `better-sqlite3`, and Bun refuses to `dlopen` that addon ([oven-sh/bun#4290](https://github.com/oven-sh/bun/issues/4290)). Bun is still the toolchain. If that issue ever ships, the image can move to `oven/bun` and `croner` can become `Bun.cron`.
 - **TLS fingerprinting.** Vanilla `fetch` works today. If requests start returning 403s with empty bodies, swap in the [`impers`](https://github.com/lexiforest/impers) library inside `src/venmo/client.ts`.
 
 ## Troubleshooting
@@ -142,10 +143,10 @@ This device-id is already trusted by Venmo, so OAuth2 won't reject it. Once auth
 Run `list-accounts` to find the UUID and set the env var.
 
 **Build fails on `better-sqlite3`**
-The Dockerfile uses `node:20-slim` with the required `python3 make g++` build deps. If you swapped to another base image, make sure those build tools are available, or use a prebuilt node-gyp binary.
+The Dockerfile builds dependencies in a separate `node:24-slim` stage that carries the `python3 make g++` node-gyp fallback. If you change the base image, keep a real `node` on `PATH` during install (`prebuild-install` needs it to pick a binary matching the runtime's Node ABI) and never pass `--ignore-scripts`, or `better_sqlite3.node` is never built.
 
 **Want to re-import everything**
-Stop the service, delete `./venmo-data/state.json`, set `INITIAL_BACKFILL_DAYS` to however many days back you want (e.g. `3650` for ten years), and run `sync-once`. Actual's `imported_id` dedup will absorb the overlap with what's already there.
+Set `INITIAL_BACKFILL_DAYS` to however many days back you want (e.g. `3650` for ten years) and run `sync-once --force`. Actual's `imported_id` dedup will absorb the overlap with what's already there.
 
 ## License
 
