@@ -11,6 +11,6 @@ module "github" {
   source    = "./node_modules/@adamhl8/configs/dist/tofu/github"
   repo_name = "actual-budget-venmo-importer"
   repo_settings = {
-    visibility = "private"
+    visibility = "public"
   }
 }
