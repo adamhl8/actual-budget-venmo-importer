@@ -3,6 +3,11 @@
   "version": "0.1.2",
   "private": true,
   "description": "Import your Venmo transactions into Actual Budget",
+  "keywords": [
+    "actual-budget",
+    "transaction-import",
+    "venmo"
+  ],
   "license": "MIT",
   "author": {
     "name": "Adam Langbert",
