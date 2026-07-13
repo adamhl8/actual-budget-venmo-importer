@@ -2,15 +2,14 @@ FROM node:24-slim AS deps
 
 WORKDIR /app
 
-# canary, not :1 -- bun.lock is lockfileVersion 2, which bun 1.3.x can't parse.
-COPY --from=oven/bun:canary /usr/local/bin/bun /usr/local/bin/bun
+COPY --from=oven/bun:latest /usr/local/bin/bun /usr/local/bin/bun
 
 # node-gyp fallback, used only if no prebuilt better-sqlite3 binary matches this platform.
 RUN apt-get update \
- && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+  && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
 
-COPY package.json bun.lock ./
+COPY package.json bun.lock bunfig.toml ./
 
 # `prepare` runs `just prepare`, which installs git hooks and syncs configs off devDependencies:
 # dev-machine setup that can't run here (--production omits those bins, and .git is dockerignored).
@@ -18,10 +17,7 @@ COPY package.json bun.lock ./
 # script and leave better_sqlite3.node missing. The runtime stage copies the pristine package.json.
 RUN npm pkg delete scripts.prepare
 
-# better-sqlite3's `prebuild-install` shebang resolves to the real node on PATH, which is what
-# selects a binary matching the runtime stage's Node ABI. --linker hoisted keeps node_modules a
-# plain tree so it survives the COPY into the runtime stage.
-RUN bun install --production --frozen-lockfile --linker hoisted
+RUN bun install --production
 
 FROM node:24-slim AS runtime
 
@@ -39,9 +35,9 @@ COPY src ./src
 ARG PUID=1000
 ARG PGID=1000
 RUN groupmod -o -g "${PGID}" node \
- && usermod -o -u "${PUID}" -g "${PGID}" node \
- && mkdir -p /data /app/actual-cache \
- && chown -R node:node /app /data
+  && usermod -o -u "${PUID}" -g "${PGID}" node \
+  && mkdir -p /data /app/actual-cache \
+  && chown -R node:node /app /data
 
 USER node
 
