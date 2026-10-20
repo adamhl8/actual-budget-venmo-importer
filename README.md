@@ -2,11 +2,6 @@
 
 Pulls your Venmo transactions on a schedule and imports them into [Actual Budget](https://actualbudget.org/). Designed to run as a Docker container alongside `actualbudget/actual-server` in a Compose stack.
 
-TypeScript, run directly under Node 24 (which strips types natively, so there's no build step). Tooling is [Bun](https://bun.com/) (install, lint, test, release). Uses an unofficial Venmo HTTP API (ported from [Integuru-AI/Venmo-Unofficial-API](https://github.com/Integuru-AI/Venmo-Unofficial-API)) and the official `@actual-app/api` package. Scheduling via [`croner`](https://github.com/Hexagon/croner).
-
-> [!IMPORTANT]
-> This image tracks the `nightly` release of `@actual-app/api`, so your Actual server should run the `actualbudget/actual-server` nightly image. Running it against a stable server can migrate your budget file forward and break older clients.
-
 ## Setup
 
 ### 1. Find your Actual Sync ID

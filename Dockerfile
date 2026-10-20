@@ -11,11 +11,11 @@ RUN apt-get update \
 
 COPY package.json bun.lock bunfig.toml ./
 
-# `prepare` runs `just prepare`, which installs git hooks and syncs configs off devDependencies:
+# `prepare` runs `bunx bask prepare`, which installs git hooks and syncs configs off devDependencies:
 # dev-machine setup that can't run here (--production omits those bins, and .git is dockerignored).
 # Drop it rather than passing --ignore-scripts, which would also skip better-sqlite3's install
 # script and leave better_sqlite3.node missing. The runtime stage copies the pristine package.json.
-RUN npm pkg delete scripts.prepare
+RUN bun pm pkg delete scripts.prepare
 
 RUN bun install --production
 

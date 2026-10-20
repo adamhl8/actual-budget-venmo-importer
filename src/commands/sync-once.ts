@@ -47,7 +47,7 @@ export const runSyncOnceCommand = async (
   } catch (error: unknown) {
     if (error instanceof VenmoAuthError) {
       logger.error("venmo.auth_failed", {
-        msg: "Venmo token rejected. Run `just auth` (or `docker compose run --rm actual-budget-venmo-importer auth`) to re-authenticate.",
+        msg: "Venmo token rejected. Run `bunx bask auth` (or `docker compose run --rm actual-budget-venmo-importer auth`) to re-authenticate.",
       })
       return 2
     }
