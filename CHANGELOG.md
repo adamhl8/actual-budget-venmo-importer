@@ -1,3 +1,11 @@
+## [0.1.3](https://github.com/adamhl8/actual-budget-venmo-importer/compare/v0.1.2..v0.1.3) - 2026-10-20
+
+### ⚙️ Miscellaneous Tasks
+
+- _(deps)_ update dependencies ([78252c2](https://github.com/adamhl8/actual-budget-venmo-importer/commit/78252c2bc82f4a05d805674f278f7007e703fd00) by @adamhl8)
+
+- add keywords ([7ff8544](https://github.com/adamhl8/actual-budget-venmo-importer/commit/7ff8544df607cd822002496c87f7c18b9fcf07b6) by @adamhl8)
+
 ## [0.1.2](https://github.com/adamhl8/actual-budget-venmo-importer/compare/v0.1.1..v0.1.2) - 2026-07-13
 
 ### ⚙️ Miscellaneous Tasks
