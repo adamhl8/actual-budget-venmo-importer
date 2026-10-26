@@ -1,3 +1,9 @@
+## [0.2.0](https://github.com/adamhl8/actual-budget-venmo-importer/compare/v0.1.3..v0.2.0) - 2026-10-26
+
+### ✨ Improvements
+
+- use bun ([fa65e2c](https://github.com/adamhl8/actual-budget-venmo-importer/commit/fa65e2c36a40a7eb2187f90ba829ad88f56d0100) by @adamhl8)
+
 ## [0.1.3](https://github.com/adamhl8/actual-budget-venmo-importer/compare/v0.1.2..v0.1.3) - 2026-10-20
 
 ### ⚙️ Miscellaneous Tasks
