@@ -1,4 +1,4 @@
-import { setTimeout as sleep } from "node:timers/promises"
+import { sleep } from "bun"
 
 import type { Logger } from "#logger.ts"
 import { API_BASE, APP_HEADERS } from "#venmo/constants.ts"
@@ -81,7 +81,7 @@ export class VenmoClient {
           )
         }
 
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+        // oxlint-disable-next-line typescript/no-unsafe-type-assertion - each caller names the response shape it expects
         return (await res.json()) as T
       } catch (error: unknown) {
         if (error instanceof VenmoAuthError || error instanceof VenmoApiError) throw error

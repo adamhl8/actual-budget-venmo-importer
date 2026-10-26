@@ -1,28 +1,4 @@
-import { z } from "zod"
-
-const boolFromString = z
-  .union([z.boolean(), z.string()])
-  .transform((v) => (typeof v === "boolean" ? v : /^(?:1|true|yes|on)$/iv.test(v)))
-
-const intFromString = z
-  .union([z.number(), z.string()])
-  .transform((v) => (typeof v === "number" ? v : Math.trunc(Number(v))))
-  .pipe(z.number().int().nonnegative())
-
-const ConfigSchema = z.object({
-  ACTUAL_SERVER_URL: z.url().optional(),
-  ACTUAL_SERVER_PASSWORD: z.string().min(1).optional(),
-  ACTUAL_SYNC_ID: z.string().min(1).optional(),
-  ACTUAL_VENMO_ACCOUNT_ID: z.string().min(1).optional(),
-  VENMO_DEVICE_ID: z.string().min(1).optional(),
-  SYNC_CRON: z.string().min(1).default("0 4 * * *"),
-  INITIAL_BACKFILL_DAYS: intFromString.default(30),
-  IMPORT_PENDING: boolFromString.default(true),
-  SYNC_ON_BOOT: boolFromString.default(false),
-  DATA_DIR: z.string().min(1).default("/data"),
-  ACTUAL_CACHE_DIR: z.string().min(1).default("/app/actual-cache"),
-  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
-})
+import { parseEnv } from "@adamhl8/configs/env"
 
 export interface Config {
   actual: {
@@ -52,16 +28,21 @@ export interface ActualSyncConfig extends ActualConnection {
   venmoAccountId: string
 }
 
-export const loadConfig = (
-  // oxlint-disable-next-line node/no-process-env
-  env: Record<string, string | undefined> = process.env,
-): Config => {
-  const parsed = ConfigSchema.safeParse(env)
-  if (!parsed.success) {
-    const issues = parsed.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`).join("\n")
-    throw new Error(`Invalid configuration:\n${issues}`)
-  }
-  const c = parsed.data
+export const loadConfig = (): Config => {
+  const c = parseEnv({
+    "ACTUAL_SERVER_URL?": "string.url",
+    "ACTUAL_SERVER_PASSWORD?": "string > 0",
+    "ACTUAL_SYNC_ID?": "string > 0",
+    "ACTUAL_VENMO_ACCOUNT_ID?": "string > 0",
+    "VENMO_DEVICE_ID?": "string > 0",
+    SYNC_CRON: "string > 0 = '0 4 * * *'",
+    INITIAL_BACKFILL_DAYS: "number.integer >= 0 = 30",
+    IMPORT_PENDING: "boolean = true",
+    SYNC_ON_BOOT: "boolean = false",
+    DATA_DIR: "string > 0 = '/data'",
+    ACTUAL_CACHE_DIR: "string > 0 = '/app/actual-cache'",
+    LOG_LEVEL: "'debug' | 'info' | 'warn' | 'error' = 'info'",
+  })
   return {
     actual: {
       serverUrl: c.ACTUAL_SERVER_URL,

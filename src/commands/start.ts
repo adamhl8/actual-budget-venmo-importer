@@ -1,6 +1,4 @@
-import { randomUUID } from "node:crypto"
-
-import { Cron } from "croner"
+import { cron } from "bun"
 
 import { ActualClient } from "#actual/client.ts"
 import { requireActualSync } from "#config.ts"
@@ -28,7 +26,7 @@ export const runStartCommand = async (config: Config, logger: Logger): Promise<v
       return
     }
     running = true
-    const runLogger = logger.child({ runId: randomUUID(), trigger })
+    const runLogger = logger.child({ runId: crypto.randomUUID(), trigger })
     try {
       const session = await loadSession(config.dataDir)
       const venmo = new VenmoClient({ session, logger: runLogger })
@@ -76,18 +74,22 @@ export const runStartCommand = async (config: Config, logger: Logger): Promise<v
     }
   }
 
-  const job = new Cron(config.syncCron, { protect: true, timezone: "UTC" }, async () => {
-    if (shuttingDown) return
-    await runOnce("cron")
-  })
+  const job = cron(
+    config.syncCron,
+    async () => {
+      if (shuttingDown) return
+      await runOnce("cron")
+    },
+    { tz: "UTC" },
+  )
   logger.info("start.cron_next", {
-    next: job.nextRun()?.toISOString(),
+    next: cron.parse(config.syncCron, Date.now(), { tz: "UTC" })?.toISOString(),
   })
 
   if (config.syncOnBoot) void runOnce("boot")
 
   // Bridge process signals into a promise so the CLI stays alive until shutdown.
-  // oxlint-disable-next-line promise/avoid-new
+  // oxlint-disable-next-line promise/avoid-new - the signal handlers resolve it once the in-flight sync drains
   await new Promise<void>((resolve) => {
     const onSignal = (sig: string): void => {
       logger.info("start.signal", { sig })

@@ -90,8 +90,8 @@ Same image, different first argument. You can `docker exec` into a running conta
 | `VENMO_DEVICE_ID`         | no             | (generated)         | Pre-trusted device-id from a browser session — bypasses OAuth2 fingerprinting if first-time `auth` returns "OAuth2 Exception". |
 | `SYNC_CRON`               | no             | `0 4 * * *`         | 5-field, UTC.                                                                                                                  |
 | `INITIAL_BACKFILL_DAYS`   | no             | `30`                | First-run window only; ignored once state is established.                                                                      |
-| `IMPORT_PENDING`          | no             | `true`              | Set `false` to skip pending stories.                                                                                           |
-| `SYNC_ON_BOOT`            | no             | `false`             | Run a sync immediately on `start`.                                                                                             |
+| `IMPORT_PENDING`          | no             | `true`              | `true` or `false`. Set `false` to skip pending stories.                                                                        |
+| `SYNC_ON_BOOT`            | no             | `false`             | `true` or `false`. Run a sync immediately on `start`.                                                                          |
 | `DATA_DIR`                | no             | `/data`             | Holds `session.json` + `state.json`.                                                                                           |
 | `ACTUAL_CACHE_DIR`        | no             | `/app/actual-cache` | Actual SDK's local cache.                                                                                                      |
 | `LOG_LEVEL`               | no             | `info`              | `debug`/`info`/`warn`/`error`.                                                                                                 |
@@ -99,7 +99,7 @@ Same image, different first argument. You can `docker exec` into a running conta
 
 ## How it works
 
-1. `start` validates a session exists, registers a `croner` job, and waits.
+1. `start` validates a session exists, registers a `Bun.cron` job, and waits.
 2. On each tick: load session → fetch Venmo stories newest-first, paginating via `before_id`, stopping when we hit `lastSeenStoryId` (incremental) or `INITIAL_BACKFILL_DAYS` cutoff (first run).
 3. Map each story to an Actual transaction:
    - `imported_id` = Venmo `story.id` — Actual dedups via this field, so re-imports update in place.
@@ -116,7 +116,6 @@ Pending transactions are imported with `cleared: false`. On a later run they re-
 - **Cancelled pending transactions** linger in Actual as uncleared. Venmo doesn't return cancelled stories, so the service can't detect them.
 - **Dates are UTC.** A 9 PM PT payment shows under the next day's date in Actual. A `USER_TZ` env var is a likely future addition.
 - **Unofficial Venmo API.** The HTTP endpoints are reverse-engineered. Expect occasional breakage when Venmo changes things — the failure point is isolated to `src/venmo/`.
-- **The runtime is Node, not Bun.** `@actual-app/api` opens its budget database through `better-sqlite3`, and Bun refuses to `dlopen` that addon ([oven-sh/bun#4290](https://github.com/oven-sh/bun/issues/4290)). Bun is still the toolchain. If that issue ever ships, the image can move to `oven/bun` and `croner` can become `Bun.cron`.
 - **TLS fingerprinting.** Vanilla `fetch` works today. If requests start returning 403s with empty bodies, swap in the [`impers`](https://github.com/lexiforest/impers) library inside `src/venmo/client.ts`.
 
 ## Troubleshooting
@@ -136,9 +135,6 @@ This device-id is already trusted by Venmo, so OAuth2 won't reject it. Once auth
 
 **`Missing required environment variable: ACTUAL_VENMO_ACCOUNT_ID`**
 Run `list-accounts` to find the UUID and set the env var.
-
-**Build fails on `better-sqlite3`**
-The Dockerfile builds dependencies in a separate `node:24-slim` stage that carries the `python3 make g++` node-gyp fallback. If you change the base image, keep a real `node` on `PATH` during install (`prebuild-install` needs it to pick a binary matching the runtime's Node ABI) and never pass `--ignore-scripts`, or `better_sqlite3.node` is never built.
 
 **Want to re-import everything**
 Set `INITIAL_BACKFILL_DAYS` to however many days back you want (e.g. `3650` for ten years) and run `sync-once --force`. Actual's `imported_id` dedup will absorb the overlap with what's already there.

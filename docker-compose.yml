@@ -9,6 +9,8 @@ services:
     image: ghcr.io/adamhl8/actual-budget-venmo-importer:latest
     container_name: actual-budget-venmo-importer
     restart: always
+    # `start` waits up to 60s for an in-flight sync on SIGTERM, and Docker's default is 10s.
+    stop_grace_period: 90s
     # Required so `docker compose run --rm actual-budget-venmo-importer auth` can prompt interactively.
     stdin_open: true
     tty: true

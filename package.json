@@ -23,27 +23,29 @@
     "#*": "./src/*"
   },
   "scripts": {
-    "prepare": "bunx bask prepare"
+    "prepare": "bask prepare"
   },
   "dependencies": {
     "@actual-app/api": "nightly",
+    "@adamhl8/configs": "^3.4.1",
     "@inquirer/prompts": "^8.7.4",
-    "croner": "^10.0.1",
-    "zod": "^4.6.7"
+    "arktype": "^2.2.9"
   },
   "devDependencies": {
-    "@adamhl8/bask": "^0.4.0",
-    "@adamhl8/configs": "^3.0.3",
+    "@adamhl8/bask": "^0.6.0",
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
-    "@types/bun": "^1.4.3",
-    "knip": "^6.42.1",
+    "@types/bun": "^1.4.4",
+    "knip": "^6.43.0",
     "markdown-toc": "^1.2.0",
     "oxfmt": "^0.74.0",
     "oxlint": "^1.89.0",
-    "oxlint-tsgolint": "^7.0.2004",
+    "oxlint-tsgolint": "^7.0.2005",
     "release-it": "^21.1.1",
-    "release-it-git-cliff": "^0.2.0",
+    "release-it-git-cliff": "^0.2.1",
     "typescript": "^7.0.2"
+  },
+  "engines": {
+    "bun": ">=1.4"
   }
 }

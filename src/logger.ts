@@ -15,8 +15,10 @@ export interface Logger {
   child: (fields: Record<string, unknown>) => Logger
 }
 
+const NEEDS_QUOTING_PATTERN = /[\s"=]/v
+
 const formatValue = (v: unknown): string => {
-  if (typeof v === "string") return /[\s"=]/v.test(v) ? JSON.stringify(v) : v
+  if (typeof v === "string") return NEEDS_QUOTING_PATTERN.test(v) ? JSON.stringify(v) : v
   if (v instanceof Error) return JSON.stringify(`${v.name}: ${v.message}`)
   return JSON.stringify(v)
 }

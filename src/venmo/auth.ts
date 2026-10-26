@@ -1,9 +1,19 @@
-import { randomUUID } from "node:crypto"
+import { type } from "arktype"
 
 import { API_BASE, APP_HEADERS, CLIENT_ID } from "#venmo/constants.ts"
 import { VenmoApiError, VenmoAuthError } from "#venmo/types.ts"
 
 const TWO_FACTOR_ERROR_CODE = 81_109
+
+const tokenResponseSchema = type({
+  "error?": { "code?": "number" },
+  "access_token?": "string",
+})
+
+const parseTokenResponse = (body: unknown): typeof tokenResponseSchema.infer => {
+  const parsed = tokenResponseSchema(body)
+  return parsed instanceof type.errors ? {} : parsed
+}
 
 interface OtpChallenge {
   otpSecret: string
@@ -11,7 +21,7 @@ interface OtpChallenge {
 
 export type LoginResult = { kind: "success"; accessToken: string } | { kind: "needs_otp"; challenge: OtpChallenge }
 
-export const generateDeviceId = (): string => randomUUID()
+export const generateDeviceId = (): string => crypto.randomUUID()
 
 const buildAuthHeaders = (deviceId: string, extra: Record<string, string> = {}): Record<string, string> => ({
   ...APP_HEADERS,
@@ -42,8 +52,7 @@ export const loginWithPassword = async (opts: {
   } catch {
     body = {}
   }
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  const parsed = body as { error?: { code?: number }; access_token?: string }
+  const parsed = parseTokenResponse(body)
 
   const errCode = parsed.error?.code
   if (errCode === TWO_FACTOR_ERROR_CODE) {
@@ -111,8 +120,7 @@ export const loginWithOtp = async (opts: { deviceId: string; otpSecret: string; 
   } catch {
     throw new VenmoAuthError(`OTP login response was not JSON: ${body.slice(0, 200)}`)
   }
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  const token = (parsed as { access_token?: string }).access_token
+  const token = parseTokenResponse(parsed).access_token
   if (!token) throw new VenmoAuthError(`OTP login response missing access_token: ${body.slice(0, 200)}`)
 
   return token

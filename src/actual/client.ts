@@ -58,7 +58,7 @@ export class ActualClient {
     this.connected = true
   }
 
-  // oxlint-disable-next-line class-methods-use-this -- instance method by design, part of the client API
+  // oxlint-disable-next-line class-methods-use-this - instance method by design, part of the client API
   public async getAccounts(): Promise<ActualAccount[]> {
     const accounts = await apiGetAccounts()
     return accounts.map((a) => ({

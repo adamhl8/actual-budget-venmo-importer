@@ -1,5 +1,13 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises"
+import { rename } from "node:fs/promises"
 import path from "node:path"
+
+import { type } from "arktype"
+import bun from "bun"
+
+const stateFileSchema = type({
+  "lastSeenStoryId?": "string | null",
+  "lastRunAt?": "string | null",
+})
 
 export interface State {
   lastSeenStoryId: string | null
@@ -21,9 +29,8 @@ const isFileNotFound = (err: unknown): boolean =>
 export const readState = async (dataDir: string): Promise<State> => {
   const filePath = statePath(dataDir)
   try {
-    const text = await readFile(filePath, "utf8")
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const parsed = JSON.parse(text) as Partial<State>
+    const text = await bun.file(filePath).text()
+    const parsed = stateFileSchema.assert(JSON.parse(text))
     return {
       lastSeenStoryId: parsed.lastSeenStoryId ?? null,
       lastRunAt: parsed.lastRunAt ?? null,
@@ -37,8 +44,7 @@ export const readState = async (dataDir: string): Promise<State> => {
 
 export const writeState = async (dataDir: string, state: State): Promise<void> => {
   const filePath = statePath(dataDir)
-  await mkdir(path.dirname(filePath), { recursive: true })
   const tmp = `${filePath}.tmp`
-  await writeFile(tmp, JSON.stringify(state, undefined, 2), "utf8")
+  await bun.write(tmp, JSON.stringify(state, undefined, 2))
   await rename(tmp, filePath)
 }
